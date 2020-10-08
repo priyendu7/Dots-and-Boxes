@@ -1,0 +1,139 @@
+<html>
+    <canvas id="canvas" width="800" height="600">
+    </canvas>
+    <script>
+        var canvas;
+        var canvasContext;
+        var n=7;
+        var m=5;
+        var canvasWidth = 800;
+        var canvasHeight = 600;
+        var canvasPadding = 10;
+        var meshHeight;
+        var meshWidth;
+        var squareWidth;
+        var squareHeight;
+        var color='white';
+        var lineWidth = 5;
+        var lines =[];
+        var line;
+
+        window.onload = function(){
+            canvas = document.getElementById('canvas');
+            canvasContext = canvas.getContext('2d');
+            canvas.style.width = canvasWidth;
+            canvas.style.height = canvasHeight;
+            canvas.style.padding = canvasPadding;
+            canvas.style.backgroundColor='red';
+            meshHeight = canvasHeight-canvasPadding*2;
+            meshWidth = canvasWidth-canvasPadding*2;
+            squareHeight = meshHeight/(m-1);
+            squareWidth = meshWidth/(n-1);
+            //setInterval(drawEverything, 5);
+            drawEverything();
+            canvas.addEventListener('click',
+                              function(evt){
+                                            var mousePos=calculateMousePosition(evt);
+                                            calculateDistance(mousePos);
+                                            
+                                            })
+        }
+        function drawEverything(){
+            for(let i=0 ;i<m;i++){
+                for (let j=0;j<n;j++){
+                    //drawCircle(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,9,'white');
+                    canvasContext.fillStyle=color;
+                    if(j<n-1){
+                        canvasContext.fillRect(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,squareWidth+lineWidth,lineWidth);
+                        x=canvasPadding+j*squareWidth;
+                        y=canvasPadding+i*squareHeight;
+                        line ={
+                            'xtl' :x,
+                            'ytl' :y,
+                            'xbr' :x+squareWidth+lineWidth,
+                            'ybr' :y+lineWidth,
+                            'color' : color
+                        };
+                        lines.push(line);
+                        z=x*10000+y;
+                        canvasContext.fillText((z),canvasPadding+10+j*squareWidth,canvasPadding-3+i*squareHeight,50);
+                        }
+                    
+                    if(i<m-1){
+                        canvasContext.fillRect(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,lineWidth,squareHeight);
+                        x=canvasPadding+j*squareWidth;
+                        y=canvasPadding+i*squareHeight;
+                        line ={
+                            'xtl' :x,
+                            'ytl' :y,
+                            'xbr' :x+lineWidth,
+                            'ybr' :y+squareHeight,
+                            'color' : color
+                        };
+                        lines.push(line);
+                    }
+                    
+                    
+
+                }
+            }  
+        } 
+
+        function updateColor(line){
+            canvasContext.fillStyle = line.color;
+            canvasContext.fillRect(line.xtl,line.ytl,line.xbr-line.xtl,line.ybr-line.ytl);
+            console.log(line);
+
+        }
+
+        function drawCircle(centerX, centerY, radius ,drawColor){
+            canvasContext.fillStyle = drawColor;
+            canvasContext.beginPath();
+            canvasContext.arc(centerX ,centerY , radius , 0 , Math.PI*2, true);
+            canvasContext.fill();
+
+            }
+
+            function calculateMousePosition(evt){
+                var rect = canvas.getBoundingClientRect();
+                var root = document.documentElement;
+                var mouseX = evt.clientX - rect.left -root.scrollLeft;
+                var mouseY = evt.clientY - rect.top - root.scrollTop;
+                return {
+                x:mouseX,
+                y:mouseY
+                };
+            }
+
+            function calculateDistance(mousePos){
+                var distance=null;
+                var minybr, minxbr;
+                var n =1;
+                var min;
+
+                lines.forEach(function (object){
+                    var dis = Math.abs(mousePos.x -object.xtl) + Math.abs(mousePos.y -object.ytl) +Math.abs(mousePos.x -object.xbr) +Math.abs(mousePos.y -object.ybr);
+                    //console.log(n +"  "+ object.xtl +","+object.ytl +","+object.xbr +","+object.ybr);
+                    n++;
+                    if(distance === null || dis<distance){
+                        distance = dis;
+                        minybr = object.ybr;
+                        minxbr = object.xbr;
+                        min = n-1;
+                        //console.log('min distance is' + dis + "with coordinates" +minxbr + "," +minybr);
+                       
+                        }
+                    
+                });
+                console.log(min);
+                var line = lines.find(line =>(line.ybr ===minybr && line.xbr===minxbr)) ;
+                var index = lines.findIndex(l => l===line);
+                console.log("color of" + index +"is" +lines[index].color);
+                lines[index].color ='black';
+                console.log(lines[index].color);
+                updateColor(lines[index]);
+                
+                
+            }
+    </script>
+</html>
