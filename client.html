@@ -1,7 +1,21 @@
 <html>
-    <canvas id="canvas" width="800" height="600">
-    </canvas>
+    <div id="player1">
+        <p>Client ID is -</p>
+        <div id="clientIDText"></div>
+        <p>Game ID -</p>
+        <input type="text" id = 'gameIDText'>
+        <button id = "btnCreate">Create</button>
+        <button id = "btnJoin">Join</button>
+        <p id = "messageText"></p>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="player2">
+        <p>Client ID is -</p>
+        <div id="clientID2Text"></div>
+    </div>
+
     <script>
+        var windowHeight,windowWidth;
         var canvas;
         var canvasContext;
         var n=7;
@@ -18,13 +32,105 @@
         var lines =[];
         var line;
 
+        const btnCreate = document.getElementById('btnCreate');
+        const btnJoin = document.getElementById('btnJoin');
+        const iptGameID = document.getElementById('gameIDText');
+        const clientIDText = document.getElementById('clientIDText');
+        const clientID2Text = document.getElementById('clientID2Text');
+        const messageText = document.getElementById('messageText');
+
+
+        var myClientID;
+        var myGameID;
+        var myColor;
+        var p2ClientID,p2Color;
+
+        btnCreate.addEventListener('click', e=>{
+            var msg = {
+                'clientID' : myClientID,
+                'method' : 'create'
+            };
+            ws.send(JSON.stringify(msg));
+            
+        });
+        btnJoin.addEventListener('click', e=>{
+            myGameID = iptGameID.value;
+            var msg = {
+                'clientID' : myClientID,
+                'gameID' : myGameID,
+                'method' : 'join'
+            };
+            console.log("join clicked " + JSON.stringify(msg));
+            ws.send(JSON.stringify(msg));
+            
+        });
+
+        
+
+        let ws = new WebSocket('ws://localhost:8080');
+        ws.onmessage = message =>{
+            const result = JSON.parse(message.data);
+            if (result.method ==='connect'){
+                myClientID = result.clientID;
+                clientIDText.textContent = myClientID;
+                console.log('my clientId is ' + myClientID);
+            };
+            if (result.method ==='create'){
+                myGameID = result.game.gameID;
+                iptGameID.value = myGameID;
+                console.log('created game id is '+ myGameID +'game object is'+JSON.stringify(result.game));
+            };
+            if (result.method ==='joinError'){
+                messageText.textContent = result.message;
+            };
+            if (result.method === 'join'){
+                if (result.game.clients.length ===1){
+                    messageText.textContent ='You have joined the game but ,Wait for another player';
+                }
+                if (result.game.clients.length ===2){
+                    var clients = result.game.clients;
+                    console.log(JSON.stringify(result.game));
+                    clients.forEach(c =>{
+                        if(c.clientID === myClientID){
+                            myColor = c.color;
+                        }
+                        else if(c.clientID != myClientID){
+                            p2ClientID = c.clientID;
+                            p2Color = c.color;
+                        }
+                    });
+                    player1Window.style.backgroundColor = myColor;
+                    player2Window.style.backgroundColor = p2Color;
+                    clientID2Text.textContent = p2ClientID;
+                    console.log("start the game");
+                }
+            };
+
+        };
+
         window.onload = function(){
+            player1Window = document.getElementById('player1');
+            player2Window = document.getElementById('player2');
+            windowWidth = screen.width;
+            windowHeight = screen.height;
             canvas = document.getElementById('canvas');
             canvasContext = canvas.getContext('2d');
+            player1Window.style.width = '20%';
+            player1Window.style.height = windowHeight;
+            player1Window.style.backgroundColor = 'grey';
+            player1Window.style.float = 'left';
+            player2Window.style.width = '20%';
+            player2Window.style.height = windowHeight;
+            player2Window.style.backgroundColor = 'grey';
+            player2Window.style.float = 'right';
+            canvas.style.marginTop = (windowHeight-canvasHeight)/4;
+            //console.log(windowHeight , canvasHeight ,canvas.style.marginTop);
+            //canvasWidth = '60%';
             canvas.style.width = canvasWidth;
             canvas.style.height = canvasHeight;
             canvas.style.padding = canvasPadding;
             canvas.style.backgroundColor='red';
+            canvas.style.float = 'center';
             meshHeight = canvasHeight-canvasPadding*2;
             meshWidth = canvasWidth-canvasPadding*2;
             squareHeight = meshHeight/(m-1);
