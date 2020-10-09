@@ -44,6 +44,8 @@
         var myGameID;
         var myColor;
         var p2ClientID,p2Color;
+        var myTurn;
+
 
         btnCreate.addEventListener('click', e=>{
             var msg = {
@@ -93,6 +95,7 @@
                     clients.forEach(c =>{
                         if(c.clientID === myClientID){
                             myColor = c.color;
+                            myTurn = c.turn;
                         }
                         else if(c.clientID != myClientID){
                             p2ClientID = c.clientID;
@@ -103,6 +106,7 @@
                     player2Window.style.backgroundColor = p2Color;
                     clientID2Text.textContent = p2ClientID;
                     console.log("start the game");
+
                 }
             };
 
@@ -139,11 +143,14 @@
             drawEverything();
             canvas.addEventListener('click',
                               function(evt){
-                                            var mousePos=calculateMousePosition(evt);
-                                            calculateDistance(mousePos);
-                                            
-                                            })
+                                if(myTurn){
+                                    var mousePos=calculateMousePosition(evt);
+                                    calculateDistance(mousePos);
+                                }
+                                
+                                })
         }
+
         function drawEverything(){
             for(let i=0 ;i<m;i++){
                 for (let j=0;j<n;j++){
@@ -212,6 +219,7 @@
             }
 
             function calculateDistance(mousePos){
+
                 var distance=null;
                 var minybr, minxbr;
                 var n =1;
@@ -235,9 +243,16 @@
                 var line = lines.find(line =>(line.ybr ===minybr && line.xbr===minxbr)) ;
                 var index = lines.findIndex(l => l===line);
                 console.log("color of" + index +"is" +lines[index].color);
-                lines[index].color ='black';
-                console.log(lines[index].color);
-                updateColor(lines[index]);
+                if(lines[index].color ==='white'){
+                    lines[index].color =myColor;
+                    console.log(lines[index].color); 
+                    updateColor(lines[index]);
+                    myTurn =false;
+                }
+                else{
+                    alert = 'Wrong move , Play Again';
+                }
+                
                 
                 
             }

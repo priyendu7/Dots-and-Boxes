@@ -49,8 +49,12 @@ ws.on('request',request =>{
             const color = {'0':'yellow','1':'green'}[game[result.gameID].clients.length];
             game[result.gameID].clients.push({
                 'clientID' : result.clientID,
-                'color' : color
+                'color' : color,
+                'turn' :false
             });
+            if(game[result.gameID].clients.length===2){
+                game[result.gameID].clients[0].turn = true;
+            }
             //console.log(JSON.stringify(game[result.gameID]));
             var msg = {
                 'game' : game[result.gameID],
