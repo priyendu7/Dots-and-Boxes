@@ -1,5 +1,6 @@
 <html>
     <div id="player1">
+        <div id = "myScoreText"></div>
         <p>Client ID is -</p>
         <div id="clientIDText"></div>
         <p>Game ID -</p>
@@ -10,8 +11,10 @@
     </div>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="player2">
+        <div id = "client2ScoreText"></div>
         <p>Client ID is -</p>
         <div id="clientID2Text"></div>
+        
     </div>
 
     <script>
@@ -30,6 +33,8 @@
         var color='white';
         var lineWidth = 5;
         var lines =[];
+        var boxes = [];
+
         var line;
 
         const btnCreate = document.getElementById('btnCreate');
@@ -38,6 +43,9 @@
         const clientIDText = document.getElementById('clientIDText');
         const clientID2Text = document.getElementById('clientID2Text');
         const messageText = document.getElementById('messageText');
+        const myScoreText = document.getElementById('myScoreText');
+        const client2ScoreText = document.getElementById('client2ScoreText');
+
 
 
         var myClientID;
@@ -45,6 +53,7 @@
         var myColor;
         var p2ClientID,p2Color;
         var myTurn;
+        var myScore=0;
 
 
         btnCreate.addEventListener('click', e=>{
@@ -66,6 +75,20 @@
             ws.send(JSON.stringify(msg));
             
         });
+        function play(line){
+            console.log('play called');
+            var msg = {
+                'clientID' : myClientID,
+                'gameID' : myGameID,
+                'method' : 'play',
+                'lines' : lines,
+                'boxes' : boxes,
+                'turn' : myTurn,
+                'score' : myScore
+            }
+            ws.send(JSON.stringify(msg));
+            
+        }
 
         
 
@@ -109,6 +132,41 @@
 
                 }
             };
+            if(result.method === 'play'){
+                
+                lines = result.game.lines;
+                boxes = result.game.boxes;
+                lines.forEach(element => {
+                   
+                    if(element.color === 'yellow' ||element.color ==='green'){
+                        console.log("Calling from here");
+                        updateColor(element);
+                        
+                    }
+                    
+                });
+
+                boxes.forEach(element =>{
+                    canvasContext.fillStyle = element.color;
+                    canvasContext.fillRect(element.xtl,element.ytl,squareWidth,squareHeight);
+                           
+                });
+                result.game.clients.forEach(element =>{
+                    if(element.clientID === myClientID){
+                        myTurn = element.turn;
+                    }
+                });
+                result.game.clients.forEach(element =>{
+                    if(element.clientID === myClientID){
+                        myScoreText.textContent = element.score;
+                        myScore = element.score;
+                    }
+                    else{
+                        client2ScoreText.textContent = element.score;
+                    }
+                });
+
+            }
 
         };
 
@@ -156,34 +214,52 @@
                 for (let j=0;j<n;j++){
                     //drawCircle(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,9,'white');
                     canvasContext.fillStyle=color;
-                    if(j<n-1){
-                        canvasContext.fillRect(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,squareWidth+lineWidth,lineWidth);
-                        x=canvasPadding+j*squareWidth;
-                        y=canvasPadding+i*squareHeight;
-                        line ={
-                            'xtl' :x,
-                            'ytl' :y,
-                            'xbr' :x+squareWidth+lineWidth,
-                            'ybr' :y+lineWidth,
-                            'color' : color
-                        };
-                        lines.push(line);
-                        z=x*10000+y;
-                        canvasContext.fillText((z),canvasPadding+10+j*squareWidth,canvasPadding-3+i*squareHeight,50);
+                    if(j<n){
+                        if(j===n-1){
+                            line= {};
+                            lines.push(line);
                         }
+                        //making horizontal line
+                        else{
+                            canvasContext.fillRect(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,squareWidth+lineWidth,lineWidth);
+                            x=canvasPadding+j*squareWidth;
+                            y=canvasPadding+i*squareHeight;
+                            line ={
+                                'xtl' :x,
+                                'ytl' :y,
+                                'xbr' :x+squareWidth+lineWidth,
+                                'ybr' :y+lineWidth,
+                                'color' : color
+                            };
+                            lines.push(line);
+                            z=x*10000+y;
+                            canvasContext.fillText((z),canvasPadding+10+j*squareWidth,canvasPadding-3+i*squareHeight,50);
+
+                        }
+                        
+                    }
                     
-                    if(i<m-1){
-                        canvasContext.fillRect(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,lineWidth,squareHeight);
-                        x=canvasPadding+j*squareWidth;
-                        y=canvasPadding+i*squareHeight;
-                        line ={
-                            'xtl' :x,
-                            'ytl' :y,
-                            'xbr' :x+lineWidth,
-                            'ybr' :y+squareHeight,
-                            'color' : color
-                        };
-                        lines.push(line);
+                    if(i<m){
+                        if(i===m-1){
+                            line= {};
+                            lines.push(line);
+                        }
+                        else{
+                          //making vertical line
+                            canvasContext.fillRect(canvasPadding+j*squareWidth,canvasPadding+i*squareHeight,lineWidth,squareHeight);
+                            x=canvasPadding+j*squareWidth;
+                            y=canvasPadding+i*squareHeight;
+                            line ={
+                                'xtl' :x,
+                                'ytl' :y,
+                                'xbr' :x+lineWidth,
+                                'ybr' :y+squareHeight,
+                                'color' : color
+                            };
+                            lines.push(line);
+
+                        }
+
                     }
                     
                     
@@ -226,7 +302,8 @@
                 var min;
 
                 lines.forEach(function (object){
-                    var dis = Math.abs(mousePos.x -object.xtl) + Math.abs(mousePos.y -object.ytl) +Math.abs(mousePos.x -object.xbr) +Math.abs(mousePos.y -object.ybr);
+                    if(object){
+                        var dis = Math.abs(mousePos.x -object.xtl) + Math.abs(mousePos.y -object.ytl) +Math.abs(mousePos.x -object.xbr) +Math.abs(mousePos.y -object.ybr);
                     //console.log(n +"  "+ object.xtl +","+object.ytl +","+object.xbr +","+object.ybr);
                     n++;
                     if(distance === null || dis<distance){
@@ -237,6 +314,9 @@
                         //console.log('min distance is' + dis + "with coordinates" +minxbr + "," +minybr);
                        
                         }
+
+                    }
+                   
                     
                 });
                 console.log(min);
@@ -248,6 +328,9 @@
                     console.log(lines[index].color); 
                     updateColor(lines[index]);
                     myTurn =false;
+                    checkForSquare(index);
+                    
+                    play();
                 }
                 else{
                     alert = 'Wrong move , Play Again';
@@ -255,6 +338,115 @@
                 
                 
                 
+            }
+
+            // function makeSquare(){
+            //     for (var i= 0;i < 18;i++){
+            //         box={
+            //             'u':i,
+            //             'lo':i+13,
+            //             'l':i+1,
+            //             'r':i+3
+            //         }
+            //         boxes.push(box);
+            //     }
+            //     for (var i= 18;i < 18;i++){
+            //         box={
+            //             'u':i,
+            //             'lo':i+13,
+            //             'l':i+1,
+            //             'r':i+3
+            //         }
+            //         boxes.push(box);
+            //     }
+            // }
+            function checkForSquare(index){
+                //checking if line is horizontal
+                if(lines[index].ybr-lines[index].ytl === lineWidth){
+                    //check if upper square exists
+                    if(index-14 >=0){
+                        if((lines[index-14].color !='white') 
+                        &&(lines[index-13].color !='white') 
+                        &&(lines[index-11].color !='white') ){
+                            //fill upper square
+                            //turn =true
+                            canvasContext.fillStyle = myColor;
+                            canvasContext.fillRect(lines[index-14].xtl,lines[index-14].ytl,squareWidth,squareHeight);
+                            myTurn=true;
+                            myScore++;
+                            
+                            box ={
+                                'xtl':lines[index-14].xtl,
+                                'ytl':lines[index-14].ytl,
+                                'color':myColor
+                            }
+                            boxes.push(box);
+                        }   
+                    }
+                    //check if lower square exists
+                    if(index+14 <67){
+                        if((lines[index+1].color !='white') 
+                        &&(lines[index+3].color !='white') 
+                        &&(lines[index+14].color !='white') ){
+                            //fill lower square
+                            //turn =true
+                            canvasContext.fillStyle = myColor;
+                            canvasContext.fillRect(lines[index].xtl,lines[index].ytl,squareWidth,squareHeight);
+                            myTurn=true;
+                            myScore++;
+                            box ={
+                                'xtl':lines[index].xtl,
+                                'ytl':lines[index].ytl,
+                                'color':myColor
+                            }
+                            boxes.push(box);
+                        }   
+                    }
+                    
+                }
+                //checking if vertical
+                if(lines[index].xbr-lines[index].xtl === lineWidth){
+                    //check if left square exists
+                    if(index%14 !=1){
+                        if((lines[index-2].color !='white') 
+                        &&(lines[index-3].color !='white') 
+                        &&(lines[index+11].color !='white') ){
+                            //fill left square
+                            //turn =true
+                            canvasContext.fillStyle = myColor;
+                            canvasContext.fillRect(lines[index-3].xtl,lines[index-3].ytl,squareWidth,squareHeight);
+                            myTurn=true;
+                            myScore++;
+                            box ={
+                                'xtl':lines[index-3].xtl,
+                                'ytl':lines[index-3].ytl,
+                                'color':myColor
+                            }
+                            boxes.push(box);
+                        }
+                    }
+                    //check if right exists
+                    if(index%14 !=13){
+                        if((lines[index-1].color !='white') 
+                        &&(lines[index+2].color !='white') 
+                        &&(lines[index+13].color !='white') ){
+                            //fill right square
+                            //turn =true
+                            canvasContext.fillStyle = myColor;
+                            canvasContext.fillRect(lines[index].xtl,lines[index].ytl,squareWidth,squareHeight);
+                            myTurn=true;
+                            myScore++;
+                            box ={
+                                'xtl':lines[index].xtl,
+                                'ytl':lines[index].ytl,
+                                'color':myColor
+                            }
+                            boxes.push(box);
+                        }
+
+                    }
+                  
+                }
             }
     </script>
 </html>

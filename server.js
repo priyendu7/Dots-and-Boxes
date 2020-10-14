@@ -14,6 +14,7 @@ const ws = new websocketServer({
 
 const clients = {};
 const game = {};
+const line = [];
 
 
 
@@ -28,7 +29,9 @@ ws.on('request',request =>{
             const gameID = guid();
             game[gameID] = { 
                 'gameID' : gameID,
-                'clients' : []
+                'clients' : [],
+                'lines' : [],
+                'boxes' :[]
             };
             const msg = {
                 'game' : game[gameID],
@@ -50,7 +53,8 @@ ws.on('request',request =>{
             game[result.gameID].clients.push({
                 'clientID' : result.clientID,
                 'color' : color,
-                'turn' :false
+                'turn' : false,
+                'score' : 0
             });
             if(game[result.gameID].clients.length===2){
                 game[result.gameID].clients[0].turn = true;
@@ -67,6 +71,27 @@ ws.on('request',request =>{
             
             
         };
+        if(result.method === 'play'){
+            console.log('play called in server');
+            game[result.gameID].lines = result.lines;
+            game[result.gameID].boxes = result.boxes;
+            game[result.gameID].clients.forEach(element =>{
+                if(element.clientID ===result.clientID){
+                    element.turn = result.turn;
+                    element.score = result.score;
+                }
+                else{
+                    element.turn = !result.turn;
+                }
+            });
+            var msg = {
+                'game' : game[result.gameID],
+                'method' : 'play'
+            };
+            game[result.gameID].clients.forEach(element => {
+                clients[element.clientID].connection.send(JSON.stringify(msg));
+            });
+        }
 
         
     });
